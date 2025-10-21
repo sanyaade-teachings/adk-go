@@ -30,28 +30,37 @@ import (
 	"google.golang.org/adk/session"
 )
 
+// A2AConfig is used to describe and configure a remote agent.
 type A2AConfig struct {
 	Name        string
 	Description string
 
-	AgentCard          *a2a.AgentCard
-	AgentCardSource    string
+	AgentCard *a2a.AgentCard
+	// AgentCardSource can be either an http(s) URL or a local file path. If a2a.AgentCard
+	// is not provided, the source is used to resolve the card during the first agent invocation.
+	AgentCardSource string
+	// ClientFactory can be used to provide a set of a2aclient.Client configurations.
 	CardResolveOptions []agentcard.ResolveOption
 
-	ClientFactory     *a2aclient.Factory
+	// ClientFactory can be used to provide a set of a2aclient.Client configurations.
+	ClientFactory *a2aclient.Factory
+	// MessageSendConfig is attached to a2a.MessageSendParams on every agent invocation.
 	MessageSendConfig *a2a.MessageSendConfig
 }
 
+// New creates a RemoteAgent. A2A (Agent-To-Agent) protocol is used for communication with an
+// agent which can run in a different process or on a different host.
 func New(cfg A2AConfig) (agent.Agent, error) {
 	if cfg.AgentCard == nil && cfg.AgentCardSource == "" {
 		return nil, fmt.Errorf("either AgentCard, or AgentCardPath, or AgentCardURL must be provided")
 	}
 
+	remoteAgent := &a2aAgent{resolvedCard: cfg.AgentCard}
 	a2aAgent, err := agent.New(agent.Config{
 		Name:        cfg.Name,
 		Description: cfg.Description,
 		Run: func(ic agent.InvocationContext) iter.Seq2[*session.Event, error] {
-			return runRemoteA2A(ic, cfg)
+			return remoteAgent.run(ic, cfg)
 		},
 	})
 	if err != nil {
@@ -60,13 +69,18 @@ func New(cfg A2AConfig) (agent.Agent, error) {
 	return a2aAgent, err
 }
 
-func runRemoteA2A(ctx agent.InvocationContext, cfg A2AConfig) iter.Seq2[*session.Event, error] {
+type a2aAgent struct {
+	resolvedCard *a2a.AgentCard
+}
+
+func (a *a2aAgent) run(ctx agent.InvocationContext, cfg A2AConfig) iter.Seq2[*session.Event, error] {
 	return func(yield func(*session.Event, error) bool) {
 		card, err := resolveAgentCard(ctx, cfg)
 		if err != nil {
 			yield(toErrorEvent(ctx, fmt.Errorf("agent card resolution failed: %w", err)), nil)
 			return
 		}
+		a.resolvedCard = card
 
 		var client *a2aclient.Client
 		if cfg.ClientFactory != nil {
