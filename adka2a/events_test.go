@@ -282,11 +282,11 @@ func TestToSessionEvent(t *testing.T) {
 			input: &a2a.TaskStatusUpdateEvent{TaskID: taskID, ContextID: contextID, Final: true},
 			want: &session.Event{
 				LLMResponse: model.LLMResponse{
-					TurnComplete: true,
 					CustomMetadata: map[string]any{
 						customMetaTaskIDKey:    string(taskID),
 						customMetaContextIDKey: contextID,
 					},
+					TurnComplete: true,
 				},
 				Author: agentName,
 				Branch: branch,
