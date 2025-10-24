@@ -145,7 +145,7 @@ func setupA2AServer(c *WebConfig, adkConfig *adk.Config, rBase *mux.Router) http
 	}
 	rBase.HandleFunc("/.well-known/agent-card.json", func(w http.ResponseWriter, r *http.Request) {
 		grpcURL := "127.0.0.1:" + strconv.Itoa(c.LocalPort)
-		host := r.Header.Get("X-Forwarded-Host")
+		host := r.Header.Get("Host")
 		if host != "" {
 			grpcURL = "https://" + host
 		}
