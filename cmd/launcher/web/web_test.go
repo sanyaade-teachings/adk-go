@@ -33,25 +33,32 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func getFreePort() (port int, err error) {
-	var a *net.TCPAddr
-	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
-		var l *net.TCPListener
-		if l, err = net.ListenTCP("tcp", a); err == nil {
-			defer l.Close()
-			return l.Addr().(*net.TCPAddr).Port, nil
-		}
+func getFreePort(t *testing.T) int {
+	t.Helper()
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("net.ResolveTCPAddr() error = %v", err)
 	}
-	return
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		t.Fatalf("net.ListenTCP() error = %v", err)
+	}
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Fatalf("listener.Close() error = %v", err)
+		}
+	}()
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		t.Fatalf("listener.Addr() = %T, want net.TCPAddr", listener.Addr())
+	}
+	return tcpAddr.Port
 }
 
 func TestWebLauncher_ServesA2A(t *testing.T) {
 	ctx := t.Context()
 
-	port, err := getFreePort()
-	if err != nil {
-		t.Fatalf("getFreePort() error = %v", err)
-	}
+	port := getFreePort(t)
 
 	launcher, _, err := BuildLauncher([]string{"--serve_a2a", "--port", strconv.Itoa(port)})
 	if err != nil {
