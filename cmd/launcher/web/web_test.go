@@ -43,16 +43,15 @@ func getFreePort(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("net.ListenTCP() error = %v", err)
 	}
-	defer func() {
-		if err := listener.Close(); err != nil {
-			t.Fatalf("listener.Close() error = %v", err)
-		}
-	}()
 	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
 	if !ok {
 		t.Fatalf("listener.Addr() = %T, want net.TCPAddr", listener.Addr())
 	}
-	return tcpAddr.Port
+	port := tcpAddr.Port
+	if err := listener.Close(); err != nil {
+		t.Fatalf("listener.Close() error = %v", err)
+	}
+	return port
 }
 
 func TestWebLauncher_ServesA2A(t *testing.T) {
