@@ -72,7 +72,7 @@ type Sublauncher interface {
 	SimpleDescription() string
 
 	// SetupSubrouters adds sublauncher-specific routes to the router.
-	SetupSubrouters(router *mux.Router, adkConfig *launcher.Config) error
+	SetupSubrouters(router *mux.Router, config *launcher.Config) error
 	// UserMessage is a hook for sublaunchers to print a message to the user when the web server starts.
 	UserMessage(webURL string, printer func(v ...any))
 }

@@ -64,8 +64,8 @@ func (w *webUILauncher) Parse(args []string) ([]string, error) {
 
 // SetupSubrouters implements the web.Sublauncher interface. It adds the
 // WebUI subrouter to the main router.
-func (w *webUILauncher) SetupSubrouters(router *mux.Router, adkConfig *launcher.Config) error {
-	w.AddSubrouter(router, w.config.pathPrefix, adkConfig, w.config.backendAddress)
+func (w *webUILauncher) SetupSubrouters(router *mux.Router, config *launcher.Config) error {
+	w.AddSubrouter(router, w.config.pathPrefix, config, w.config.backendAddress)
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (w *webUILauncher) UserMessage(webURL string, printer func(v ...any)) {
 var content embed.FS
 
 // AddSubrouter adds a subrouter to serve the ADK Web UI.
-func (w *webUILauncher) AddSubrouter(router *mux.Router, pathPrefix string, adkConfig *launcher.Config, backendAddress string) {
+func (w *webUILauncher) AddSubrouter(router *mux.Router, pathPrefix string, config *launcher.Config, backendAddress string) {
 	// Setup serving of ADK Web UI
 	rUI := router.Methods("GET").PathPrefix(pathPrefix).Subrouter()
 
